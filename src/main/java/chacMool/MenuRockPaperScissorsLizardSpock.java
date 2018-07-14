@@ -7,6 +7,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JRadioButtonMenuItem;
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JMenuBar;
 import javax.swing.KeyStroke;
@@ -33,6 +34,7 @@ public class MenuRockPaperScissorsLizardSpock implements Runnable {
     
     protected int score_you = 0;
     protected int score_computer = 0;
+    protected boolean cheat_enabled = false;
     
     protected boolean enableRockPaperScissors() {
     	boolean changed = !rockPaperScissors;
@@ -61,6 +63,12 @@ public class MenuRockPaperScissorsLizardSpock implements Runnable {
         }
 
         return changed;
+    }
+    
+    protected boolean enableCheat(boolean flag) {
+    	boolean formerly = cheat_enabled;
+    	cheat_enabled = flag;
+    	return formerly;
     }
 
     public JMenuBar createMenuBar() {
@@ -134,6 +142,11 @@ public class MenuRockPaperScissorsLizardSpock implements Runnable {
 
         cbMenuItem = new JCheckBoxMenuItem("Cheat");
         cbMenuItem.setMnemonic(KeyEvent.VK_C);
+        cbMenuItem.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent evt) {
+        		enableCheat(((AbstractButton) evt.getSource()).getModel().isSelected());
+        	}
+        });
         menu.add(cbMenuItem);
 
         /*
@@ -205,7 +218,7 @@ public class MenuRockPaperScissorsLizardSpock implements Runnable {
     			{ "Paper covers Rock", "tie", "Scissors cut Paper" },
     			{ "Rock breaks Scissors", "Scissors cut Paper", "tie" }
     	};
-    	int computer = 0 == roll.nextInt(2) ? -1 : 1;
+    	int computer = cheat_enabled ? -1 : (0 == roll.nextInt(2) ? -1 : 1);
 
     	computer = (choice + computer + 3) % 3;
     	boolean looser = 1 == computer-choice || -2 == computer-choice;
@@ -233,9 +246,20 @@ public class MenuRockPaperScissorsLizardSpock implements Runnable {
     			{ "Spock phasers Rock", "Paper disproves Spock", "Spock smashes Scissors", "Lizard poisons Spock", "tie" }
     	};
     	
-    	int computer = roll.nextInt(4);
-    	computer = 2 > computer ? computer-2 : computer-1;
-    	computer = (choice + computer + 5) % 5;
+    	int computer;
+    	if (cheat_enabled) {
+    		int cc = roll.nextInt(2);
+    		for (computer = 0; computer < 5 && cc >= 0; computer++)
+    			if (1 == win[choice][computer]) {
+    				// this is a win.  there are two wins.  randomize the win between the two of them.
+    				cc--;
+    				if (0 > cc) break;
+    			}
+    	} else {
+	    	computer = roll.nextInt(4);
+	    	computer = 2 > computer ? computer-2 : computer-1;
+	    	computer = (choice + computer + 5) % 5;
+    	}
     	
     	boolean winner = 1 == win[choice][computer];
     	String analysis = winsay[choice][computer];
